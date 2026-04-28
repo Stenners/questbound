@@ -250,6 +250,7 @@ function Dashboard({ players, quests, shopItems }) {
 
                         <button
                           className={`btn-game ${q.status === 'Completed' ? 'success' : ''}`}
+                          style={{ marginTop: 'auto' }}
                           disabled={q.status === 'Completed'}
                           onClick={() => handleClaim(q)}
                         >
