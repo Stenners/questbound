@@ -95,11 +95,9 @@ h6,
   border-radius: var(--radius-lg);
   padding: 8px;
   box-shadow: 0 8px 0 rgba(0, 0, 0, 0.4);
-  margin-bottom: 0px;
-  /* Removed margin so they align perfectly at the bottom */
+  margin-bottom: 8px;
   display: flex;
   flex-direction: column;
-  flex: 1;
 }
 
 .panel-header {
@@ -119,8 +117,6 @@ h6,
   border: 4px solid #160d07;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  /* stretches the inner parchment/slate to the borders */
 }
 
 .panel.parchment .panel-inner {
@@ -183,9 +179,11 @@ h6,
 .flex-col {
   display: flex;
   flex-direction: column;
-  height: 100%;
   gap: 24px;
-  /* Maintain the gap between multiple panels in the same column */
+}
+
+.items-center {
+  align-items: center;
 }
 
 /* Heroes */
@@ -270,4 +268,40 @@ h6,
   margin-bottom: 12px;
   border: 4px solid #1a2227;
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive Design */
+.portal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 850px) {
+  body {
+    padding: 12px;
+  }
+  .app-header {
+    font-size: 2.5rem;
+  }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .portal-grid {
+    grid-template-columns: 1fr;
+  }
+  .quests-grid {
+    grid-template-columns: 1fr;
+  }
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 }
