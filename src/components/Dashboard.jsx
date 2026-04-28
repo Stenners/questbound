@@ -12,7 +12,8 @@ import {
   dictAccessories,
   dictThemeColors,
   dictSkinColors,
-  dictHairColors
+  dictHairColors,
+  dictClothesColors
 } from '../constants';
 
 function Dashboard({ players, quests, shopItems }) {
@@ -21,6 +22,7 @@ function Dashboard({ players, quests, shopItems }) {
   const player = players.find(p => p.id === id);
   const [view, setView] = useState('quests'); // 'quests' or 'wardrobe'
   const [wardrobeTab, setWardrobeTab] = useState('Top');
+  const [pageState, setPageState] = useState({});
 
   if (!player) return <div>Hero not found...</div>;
 
@@ -62,58 +64,93 @@ function Dashboard({ players, quests, shopItems }) {
     }
   };
 
-  const renderOptionGrid = (options, key) => (
-    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '32px', justifyContent: 'center' }}>
-      {options.map(opt => {
-        const isSelected = player.avatarConfig?.[key]?.[0] === opt || (opt === 'none' && (!player.avatarConfig?.[key] || player.avatarConfig?.[key].length === 0));
-        return (
-          <div
-            key={opt}
-            style={{
-              backgroundColor: isSelected ? 'var(--color-success)' : '#2d1d13',
-              padding: '12px',
-              borderRadius: '16px',
-              border: '4px solid',
-              borderColor: isSelected ? '#10b981' : '#160d07',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: isSelected ? `0 4px 0 rgba(0,0,0,0.2)` : 'none'
-            }}
-            onClick={() => updateAvatar(key, opt)}
-            title={opt.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}
-          >
-            <AvatarDisplay
-              config={{
-                ...(player.avatarConfig || {}),
-                [key]: opt === 'none' ? [] : [opt]
-              }}
-              size={80}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
+  const renderCarousel = (options, key, renderItem, itemsPerPage) => {
+    const page = pageState[key] || 0;
+    const maxPage = Math.ceil(options.length / itemsPerPage) - 1;
+    const currentOptions = options.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
-  const renderColorGrid = (options, key) => (
-    <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px', justifyContent: 'center' }}>
-      {options.map(color => {
-        const isSelected = player.avatarConfig?.[key]?.[0] === color;
-        return (
-          <div
-            key={color}
-            onClick={() => updateAvatar(key, color)}
-            style={{
-              width: '40px', height: '40px', borderRadius: '50%', backgroundColor: `#${color}`,
-              border: '3px solid', borderColor: isSelected ? '#111' : 'rgba(0,0,0,0.1)',
-              cursor: 'pointer', transform: isSelected ? 'scale(1.1)' : 'scale(1)',
-              transition: 'all 0.2s', boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
-            }}
-          />
-        );
-      })}
-    </div>
-  );
+    const setPage = (delta) => {
+      setPageState(prev => ({ ...prev, [key]: Math.max(0, Math.min((prev[key] || 0) + delta, maxPage)) }));
+    };
+
+    return (
+      <div className="flex-col items-center" style={{ marginBottom: '32px', width: '100%', gap: '16px' }}>
+        <div className="flex-between" style={{ gap: '16px', width: '100%' }}>
+          <button
+            className="btn-game"
+            style={{ padding: '8px 12px', borderRadius: '50%', fontSize: '1.2rem', minWidth: '44px', visibility: page === 0 ? 'hidden' : 'visible' }}
+            onClick={() => setPage(-1)}
+          >
+            {"<"}
+          </button>
+
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', flex: 1 }}>
+            {currentOptions.map(renderItem)}
+          </div>
+
+          <button
+            className="btn-game"
+            style={{ padding: '8px 12px', borderRadius: '50%', fontSize: '1.2rem', minWidth: '44px', visibility: page >= maxPage ? 'hidden' : 'visible' }}
+            onClick={() => setPage(1)}
+          >
+            {">"}
+          </button>
+        </div>
+        {maxPage > 0 && (
+          <div className="flex-center" style={{ gap: '8px' }}>
+            {Array.from({ length: maxPage + 1 }).map((_, i) => (
+              <div key={i} style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: i === page ? '#10b981' : '#d4ba94' }} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderOptionGrid = (options, key) => renderCarousel(options, key, (opt) => {
+    const isSelected = player.avatarConfig?.[key]?.[0] === opt || (opt === 'none' && (!player.avatarConfig?.[key] || player.avatarConfig?.[key].length === 0));
+    return (
+      <div
+        key={opt}
+        style={{
+          backgroundColor: isSelected ? 'var(--color-success)' : '#2d1d13',
+          padding: '12px',
+          borderRadius: '16px',
+          border: '4px solid',
+          borderColor: isSelected ? '#10b981' : '#160d07',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          boxShadow: isSelected ? `0 4px 0 rgba(0,0,0,0.2)` : 'none'
+        }}
+        onClick={() => updateAvatar(key, opt)}
+        title={opt.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}
+      >
+        <AvatarDisplay
+          config={{
+            ...(player.avatarConfig || {}),
+            [key]: opt === 'none' ? [] : [opt]
+          }}
+          size={80}
+        />
+      </div>
+    );
+  }, 6);
+
+  const renderColorGrid = (options, key) => renderCarousel(options, key, (color) => {
+    const isSelected = player.avatarConfig?.[key]?.[0] === color;
+    return (
+      <div
+        key={color}
+        onClick={() => updateAvatar(key, color)}
+        style={{
+          width: '40px', height: '40px', borderRadius: '50%', backgroundColor: `#${color}`,
+          border: '3px solid', borderColor: isSelected ? '#111' : 'rgba(0,0,0,0.1)',
+          cursor: 'pointer', transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+          transition: 'all 0.2s', boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+        }}
+      />
+    );
+  }, 8);
 
   return (
     <div>
@@ -277,7 +314,14 @@ function Dashboard({ players, quests, shopItems }) {
                       {renderColorGrid(dictHairColors, 'hairColor')}
                     </>
                   )}
-                  {wardrobeTab === 'Clothes' && renderOptionGrid(dictClothing, 'clothing')}
+                  {wardrobeTab === 'Clothes' && (
+                    <>
+                      {renderOptionGrid(dictClothing, 'clothing')}
+                      <div style={{ height: '2px', backgroundColor: '#d4ba94', margin: '24px 0' }}></div>
+                      <h3 className="game-font" style={{ color: '#3d2616', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Clothes Color</h3>
+                      {renderColorGrid(dictClothesColors, 'clothesColor')}
+                    </>
+                  )}
                   {wardrobeTab === 'Accessories' && renderOptionGrid(dictAccessories, 'accessories')}
 
                   {wardrobeTab === 'Face' && (

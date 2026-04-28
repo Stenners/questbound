@@ -8,10 +8,10 @@ function ParentPortal({ players, quests }) {
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+
   const [newQuest, setNewQuest] = useState({ title: '', xp: 10, gold: 10, assignedTo: 'co-op', isNonNegotiable: false });
 
-  const CORRECT_PIN = import.meta.env.VITE_PARENT_PIN || '1234';
+  const CORRECT_PIN = import.meta.env.VITE_PARENT_PIN;
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -52,7 +52,7 @@ function ParentPortal({ players, quests }) {
     if (window.confirm(`Reject this claim? This will deduct ${quest.xp} XP and ${quest.gold} Gold from ${player.name}.`)) {
       let newXp = (player.xp || 0) - (quest.xp || 0);
       if (newXp < 0) newXp = 0;
-      
+
       let newCompleted = player.weeklyNonNegotiablesCompleted || 0;
       if (quest.isNonNegotiable && newCompleted > 0) {
         newCompleted -= 1;
@@ -85,10 +85,10 @@ function ParentPortal({ players, quests }) {
         <div className="panel parchment" style={{ padding: '32px', maxWidth: '400px', width: '100%' }}>
           <h2 className="game-font" style={{ textAlign: 'center', marginBottom: '24px', color: '#3d2616', fontSize: '2rem' }}>Parent Portal</h2>
           <form onSubmit={handleLogin} className="flex-col">
-            <input 
-              type="password" 
-              value={pin} 
-              onChange={e => setPin(e.target.value)} 
+            <input
+              type="password"
+              value={pin}
+              onChange={e => setPin(e.target.value)}
               placeholder="Enter PIN (1234)"
               className="game-font"
               style={{ fontSize: '1.5rem', padding: '12px', textAlign: 'center', borderRadius: '8px', border: '3px solid #d4ba94', outline: 'none' }}
@@ -114,7 +114,7 @@ function ParentPortal({ players, quests }) {
       </div>
 
       <div className="portal-grid">
-        
+
         {/* Left Column: Heroes */}
         <div className="flex-col">
           <div className="panel parchment">
@@ -123,7 +123,7 @@ function ParentPortal({ players, quests }) {
               {players.map(p => (
                 <div key={p.id} style={{ backgroundColor: '#fff9eb', border: '2px solid #d4ba94', borderRadius: '12px', padding: '16px' }}>
                   <h3 className="game-font" style={{ fontSize: '1.4rem', color: '#3d2616', marginBottom: '8px' }}>{(p.name || 'Unknown Hero').toUpperCase()}</h3>
-                  
+
                   <div className="flex-between" style={{ marginBottom: '8px', color: '#78350f', fontWeight: 'bold' }}>
                     <span>Gold: {p.gold || 0}</span>
                     <div className="flex-center" style={{ gap: '8px' }}>
@@ -139,7 +139,7 @@ function ParentPortal({ players, quests }) {
                       <button onClick={() => handleUpdatePlayer(p, 'xp', 10)} style={{ padding: '4px 8px', borderRadius: '4px', background: '#10b981', color: 'white', border: 'none', cursor: 'pointer' }}>+10</button>
                     </div>
                   </div>
-                  
+
                   <div className="flex-between" style={{ color: '#b45309', fontWeight: 'bold', fontSize: '0.9rem' }}>
                     <span>Weekly: {p.weeklyNonNegotiablesCompleted || 0}/{p.weeklyNonNegotiablesTotal || 5}</span>
                     <div className="flex-center" style={{ gap: '8px' }}>
@@ -158,29 +158,29 @@ function ParentPortal({ players, quests }) {
           <div className="panel parchment">
             <h2 className="game-font panel-header" style={{ color: '#3d2616' }}>Create Quest</h2>
             <form className="panel-inner flex-col" style={{ padding: '16px', gap: '16px' }} onSubmit={handleAddQuest}>
-              <input type="text" placeholder="Quest Title" value={newQuest.title} onChange={e => setNewQuest({...newQuest, title: e.target.value})} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #d4ba94', fontSize: '1.1rem' }} required />
-              
+              <input type="text" placeholder="Quest Title" value={newQuest.title} onChange={e => setNewQuest({ ...newQuest, title: e.target.value })} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #d4ba94', fontSize: '1.1rem' }} required />
+
               <div className="flex-between" style={{ gap: '16px' }}>
                 <div className="flex-col" style={{ gap: '4px', flex: 1 }}>
                   <label style={{ fontSize: '0.9rem', color: '#78350f', fontWeight: 'bold' }}>XP Reward</label>
-                  <input type="number" value={newQuest.xp} onChange={e => setNewQuest({...newQuest, xp: e.target.value})} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #d4ba94', fontSize: '1.1rem' }} required />
+                  <input type="number" value={newQuest.xp} onChange={e => setNewQuest({ ...newQuest, xp: e.target.value })} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #d4ba94', fontSize: '1.1rem' }} required />
                 </div>
                 <div className="flex-col" style={{ gap: '4px', flex: 1 }}>
                   <label style={{ fontSize: '0.9rem', color: '#78350f', fontWeight: 'bold' }}>Gold Reward</label>
-                  <input type="number" value={newQuest.gold} onChange={e => setNewQuest({...newQuest, gold: e.target.value})} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #d4ba94', fontSize: '1.1rem' }} required />
+                  <input type="number" value={newQuest.gold} onChange={e => setNewQuest({ ...newQuest, gold: e.target.value })} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #d4ba94', fontSize: '1.1rem' }} required />
                 </div>
               </div>
 
               <div className="flex-col" style={{ gap: '4px' }}>
                 <label style={{ fontSize: '0.9rem', color: '#78350f', fontWeight: 'bold' }}>Assign To</label>
-                <select value={newQuest.assignedTo} onChange={e => setNewQuest({...newQuest, assignedTo: e.target.value})} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #d4ba94', fontSize: '1.1rem' }}>
+                <select value={newQuest.assignedTo} onChange={e => setNewQuest({ ...newQuest, assignedTo: e.target.value })} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #d4ba94', fontSize: '1.1rem' }}>
                   <option value="co-op">Co-op (Anyone)</option>
                   {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
 
               <label className="flex-center" style={{ gap: '8px', color: '#b45309', fontWeight: 'bold', justifyContent: 'flex-start' }}>
-                <input type="checkbox" checked={newQuest.isNonNegotiable} onChange={e => setNewQuest({...newQuest, isNonNegotiable: e.target.checked})} style={{ width: '20px', height: '20px' }} />
+                <input type="checkbox" checked={newQuest.isNonNegotiable} onChange={e => setNewQuest({ ...newQuest, isNonNegotiable: e.target.checked })} style={{ width: '20px', height: '20px' }} />
                 Is Non-Negotiable?
               </label>
 
