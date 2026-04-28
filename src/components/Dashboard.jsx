@@ -132,16 +132,7 @@ function Dashboard({ players, quests, shopItems }) {
     return (
       <div
         key={opt}
-        style={{
-          backgroundColor: isSelected ? 'var(--color-success)' : '#374151',
-          padding: '12px',
-          borderRadius: '16px',
-          border: '4px solid',
-          borderColor: isSelected ? '#10b981' : '#0f172a',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-          boxShadow: isSelected ? `0 4px 0 rgba(0,0,0,0.2)` : 'none'
-        }}
+        className={`wardrobe-item-card ${isSelected ? 'active' : ''}`}
         onClick={() => updateAvatar(key, opt)}
         title={opt.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}
       >
@@ -174,9 +165,9 @@ function Dashboard({ players, quests, shopItems }) {
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', marginBottom: '24px', width: '100%' }}>
+      <div className="app-nav">
         <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-          <button className="btn-game" style={{ fontSize: '0.9rem', padding: '8px 16px', backgroundColor: '#3b82f6', borderColor: '#1e3a8a', color: '#fff' }} onClick={() => navigate('/')}>
+          <button className="btn-game blue" style={{ fontSize: '0.9rem' }} onClick={() => navigate('/')}>
             <div className="flex-center" style={{ gap: '8px' }}>
               <ArrowLeft size={18} /> SWITCH HERO
             </div>
@@ -191,12 +182,12 @@ function Dashboard({ players, quests, shopItems }) {
         <div className="flex-col">
           <div className="panel">
             <h2 className="game-font panel-header">Character Sheet</h2>
-            <div className="panel-inner flex-col items-center" style={{ paddingTop: '32px', borderColor: player.themeColor || '#10b981', borderWidth: '4px' }}>
-              <div style={{ backgroundColor: '#374151', borderRadius: '50%', padding: '12px', border: `4px solid ${player.themeColor || '#10b981'}`, boxShadow: `0 8px 16px ${player.themeColor || '#10b981'}40`, marginBottom: '16px' }}>
-                <AvatarDisplay config={player.avatarConfig || {}} size={140} />
+            <div className="panel-inner flex-col character-card" style={{ borderColor: player.themeColor || '#10b981', borderWidth: '4px' }}>
+              <div className="character-avatar-frame" style={{ borderColor: player.themeColor || '#10b981', boxShadow: `0 8px 16px ${player.themeColor || '#10b981'}40` }}>
+                <AvatarDisplay config={player.avatarConfig || {}} />
               </div>
-              <h3 className="game-font" style={{ fontSize: '1.6rem', color: '#fff' }}>{(player.name || 'UNKNOWN HERO').toUpperCase()}</h3>
-              <p className="game-font" style={{ fontSize: '1rem', color: player.themeColor || '#10b981', letterSpacing: '0.5px', marginBottom: '24px' }}>{(player.title || 'NOVICE').toUpperCase()}</p>
+              <h3 className="game-font character-name">{(player.name || 'UNKNOWN HERO').toUpperCase()}</h3>
+              <p className="game-font character-title" style={{ color: player.themeColor || '#10b981' }}>{(player.title || 'NOVICE').toUpperCase()}</p>
 
               <div style={{ width: '100%' }}>
                 <div className="flex-between game-font" style={{ fontSize: '1rem', marginBottom: '4px' }}>
@@ -208,14 +199,14 @@ function Dashboard({ players, quests, shopItems }) {
                 </div>
               </div>
 
-              <div className="flex-center" style={{ gap: '8px', color: 'var(--color-quest)', marginTop: '24px', marginBottom: '24px', backgroundColor: '#1a2227', width: '100%', padding: '12px', borderRadius: '12px', border: '2px solid #111' }}>
+              <div className="gold-badge">
                 <Coins size={28} fill="currentColor" strokeWidth={2} />
-                <span className="game-font" style={{ fontSize: '1.5rem' }}>{player.gold || 0} Gold</span>
+                <span className="game-font">{player.gold || 0} Gold</span>
               </div>
 
               <button
-                className="btn-game"
-                style={{ width: '100%', backgroundColor: '#3b82f6', borderColor: '#1e3a8a', color: '#fff', fontSize: '1rem', padding: '12px' }}
+                className="btn-game blue"
+                style={{ width: '100%' }}
                 onClick={() => {
                   setDraftAvatar({
                     name: dbPlayer.name || '',
@@ -245,19 +236,14 @@ function Dashboard({ players, quests, shopItems }) {
                     .filter(q => q.assignedTo === player.id || q.assignedTo === 'co-op' || !q.assignedTo)
                     .map(q => (
                       <div key={q.id} className="quest-paper flex-col" style={{ opacity: q.status === 'Completed' ? 0.6 : 1 }}>
-                        <h3 className="game-font" style={{ marginBottom: '8px', fontSize: '1.3rem', lineHeight: '1.2', color: '#1e293b' }}>{(q.title || 'UNKNOWN QUEST').toUpperCase()}</h3>
+                        <h3 className="game-font quest-title">{(q.title || 'UNKNOWN QUEST').toUpperCase()}</h3>
+                        {q.isNonNegotiable && <div className="quest-tag">NON-NEGOTIABLE</div>}
 
-                        {q.isNonNegotiable && (
-                          <div style={{ fontSize: '0.8rem', color: '#b45309', fontWeight: 'bold', marginBottom: '8px', border: '1px solid #b45309', padding: '2px 8px', borderRadius: '12px', display: 'inline-block', alignSelf: 'flex-start' }}>
-                            NON-NEGOTIABLE
-                          </div>
-                        )}
-
-                        <div className="flex-center" style={{ gap: '12px', marginBottom: '20px', fontSize: '1rem', fontWeight: 800 }}>
-                          <div className="flex-center" style={{ gap: '4px', color: '#1e3a8a' }}>
+                        <div className="quest-stats">
+                          <div className="stat-badge xp">
                             <Star size={18} fill="#3b82f6" strokeWidth={1} /> {q.xp || 0} XP
                           </div>
-                          <div className="flex-center" style={{ gap: '4px', color: '#334155' }}>
+                          <div className="stat-badge gold">
                             <Coins size={18} fill="#f59e0b" strokeWidth={1} /> {q.gold || 0}
                           </div>
                         </div>
@@ -287,20 +273,7 @@ function Dashboard({ players, quests, shopItems }) {
                     type="text"
                     value={player.name || ''}
                     onChange={(e) => updateAvatar('name', e.target.value)}
-                    className="game-font"
-                    style={{
-                      fontSize: '1.4rem',
-                      padding: '4px 12px',
-                      borderRadius: '8px',
-                      border: '3px solid #94a3b8',
-                      backgroundColor: '#f1f5f9',
-                      color: '#1e293b',
-                      textAlign: 'center',
-                      width: '75%',
-                      maxWidth: '300px',
-                      outline: 'none',
-                      boxShadow: 'inset 0 4px 6px rgba(0,0,0,0.05)'
-                    }}
+                    className="game-font wardrobe-name-input"
                   />
                 </div>
 
@@ -308,16 +281,16 @@ function Dashboard({ players, quests, shopItems }) {
                   {['Theme', 'Top', 'Face', 'Clothes', 'Accessories'].map(tab => (
                     <button
                       key={tab}
-                      className={`btn-game`}
+                      className="btn-game"
                       onClick={() => setWardrobeTab(tab)}
-                      style={{ padding: '8px 20px', fontSize: '1.2rem', margin: 0, backgroundColor: wardrobeTab === tab ? '#10b981' : 'var(--color-quest)' }}
+                      style={{ backgroundColor: wardrobeTab === tab ? '#10b981' : 'var(--color-quest)' }}
                     >
                       {tab.toUpperCase()}
                     </button>
                   ))}
                 </div>
 
-                <div style={{ backgroundColor: '#e2e8f0', borderRadius: '16px', padding: '24px', border: '3px solid #94a3b8', minHeight: '300px' }}>
+                <div className="wardrobe-panel">
                   {wardrobeTab === 'Theme' && (
                     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
                       {dictThemeColors.map(color => (
@@ -401,21 +374,21 @@ function Dashboard({ players, quests, shopItems }) {
             </div>
           </div>
 
-          <div className="panel" style={{ marginTop: '32px' }}>
+          <div className="panel">
             <h2 className="game-font panel-header">Allowance Tracker</h2>
             <div className="panel-inner flex-col items-center" style={{ backgroundColor: '#374151', padding: '24px' }}>
               <div className="flex-between game-font" style={{ fontSize: '1rem', marginBottom: '8px', width: '100%' }}>
                 <span style={{ color: '#fff' }}>Weekly Quests</span>
                 <span style={{ color: '#f59e0b' }}>{player.weeklyNonNegotiablesCompleted || 0} / {player.weeklyNonNegotiablesTotal || 5}</span>
               </div>
-              <div className="xp-bar-bg" style={{ height: '24px', borderRadius: '12px', width: '100%', backgroundColor: '#0f172a' }}>
+              <div className="allowance-bar-container xp-bar-bg">
                 <div className="xp-bar-fill" style={{
                   width: `${Math.min(((player.weeklyNonNegotiablesCompleted || 0) / (player.weeklyNonNegotiablesTotal || 5)) * 100, 100)}%`,
                   backgroundColor: '#f59e0b',
                   boxShadow: '0 0 10px #f59e0b'
                 }}></div>
               </div>
-              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '16px', textAlign: 'center' }}>
+              <p className="allowance-text">
                 Complete your non-negotiable quests to fill the bar and earn your weekly pocket money!
               </p>
             </div>

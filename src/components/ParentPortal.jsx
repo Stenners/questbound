@@ -10,7 +10,7 @@ function ParentPortal({ players, quests, rewards }) {
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const [newQuest, setNewQuest] = useState({ title: '', xp: 10, gold: 10, assignedTo: 'co-op', isNonNegotiable: false });
+  const [newQuest, setNewQuest] = useState({ title: '', xp: 10, gold: 10, assignedTo: 'co-op', isNonNegotiable: false, frequency: 'daily' });
   const [newReward, setNewReward] = useState({ title: '', cost: 20, icon: 'ShoppingBag' });
 
   const CORRECT_PIN = import.meta.env.VITE_PARENT_PIN;
@@ -49,8 +49,9 @@ function ParentPortal({ players, quests, rewards }) {
       xp: Number(newQuest.xp),
       gold: Number(newQuest.gold),
       status: 'Available',
+      frequency: newQuest.frequency
     });
-    setNewQuest({ title: '', xp: 10, gold: 10, assignedTo: 'co-op', isNonNegotiable: false });
+    setNewQuest({ title: '', xp: 10, gold: 10, assignedTo: 'co-op', isNonNegotiable: false, frequency: 'daily' });
   };
 
   const handleDeleteQuest = async (questId) => {
@@ -113,7 +114,7 @@ function ParentPortal({ players, quests, rewards }) {
             />
             <button type="submit" className="btn-game success">ENTER</button>
           </form>
-          <button className="btn-game" style={{ width: '100%', marginTop: '16px', backgroundColor: '#3b82f6', borderColor: '#1e3a8a', color: '#fff' }} onClick={() => navigate('/')}>RETURN</button>
+          <button className="btn-game blue" style={{ width: '100%', marginTop: '16px' }} onClick={() => navigate('/')}>RETURN</button>
         </div>
       </div>
     );
@@ -121,9 +122,9 @@ function ParentPortal({ players, quests, rewards }) {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', marginBottom: '24px', width: '100%' }}>
+      <div className="app-nav">
         <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-          <button className="btn-game" style={{ fontSize: '0.9rem', padding: '8px 16px', backgroundColor: '#3b82f6', borderColor: '#1e3a8a', color: '#fff' }} onClick={() => navigate('/')}>
+          <button className="btn-game blue" style={{ fontSize: '0.9rem' }} onClick={() => navigate('/')}>
             <div className="flex-center" style={{ gap: '8px' }}>
               <ArrowLeft size={18} /> EXIT PORTAL
             </div>
@@ -256,12 +257,22 @@ function ParentPortal({ players, quests, rewards }) {
                 </div>
               </div>
 
-              <div className="flex-col" style={{ gap: '4px' }}>
-                <label style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 'bold' }}>Assign To</label>
-                <select value={newQuest.assignedTo} onChange={e => setNewQuest({ ...newQuest, assignedTo: e.target.value })} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #94a3b8', fontSize: '1.1rem' }}>
-                  <option value="co-op">Co-op (Anyone)</option>
-                  {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+              <div className="flex-between" style={{ gap: '16px' }}>
+                <div className="flex-col" style={{ gap: '4px', flex: 1 }}>
+                  <label style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 'bold' }}>Assign To</label>
+                  <select value={newQuest.assignedTo} onChange={e => setNewQuest({ ...newQuest, assignedTo: e.target.value })} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #94a3b8', fontSize: '1.1rem' }}>
+                    <option value="co-op">Co-op (Anyone)</option>
+                    {players.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+                <div className="flex-col" style={{ gap: '4px', flex: 1 }}>
+                  <label style={{ fontSize: '0.9rem', color: '#334155', fontWeight: 'bold' }}>Frequency</label>
+                  <select value={newQuest.frequency} onChange={e => setNewQuest({ ...newQuest, frequency: e.target.value })} style={{ padding: '8px', borderRadius: '8px', border: '2px solid #94a3b8', fontSize: '1.1rem' }}>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="one-off">One-off</option>
+                  </select>
+                </div>
               </div>
 
               <label className="flex-center" style={{ gap: '8px', color: '#b45309', fontWeight: 'bold', justifyContent: 'flex-start' }}>
@@ -282,6 +293,9 @@ function ParentPortal({ players, quests, rewards }) {
                     <div className="game-font" style={{ fontSize: '1.1rem', color: '#1e293b' }}>{(q.title || 'Unknown').toUpperCase()}</div>
                     <div style={{ fontSize: '0.8rem', color: '#334155', marginTop: '4px' }}>
                       {q.status === 'Completed' ? `CLAIMED (by ${players.find(p => p.id === q.claimedBy)?.name || 'Unknown'})` : `For: ${q.assignedTo === 'co-op' ? 'Everyone' : (players.find(p => p.id === q.assignedTo)?.name || 'Unknown')}`}
+                      <span style={{ marginLeft: '8px', padding: '2px 6px', background: '#e2e8f0', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        {q.frequency || 'one-off'}
+                      </span>
                     </div>
                   </div>
                   <div className="flex-center" style={{ gap: '8px' }}>
