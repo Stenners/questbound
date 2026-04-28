@@ -19,12 +19,15 @@ import {
 function Dashboard({ players, quests, shopItems }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const player = players.find(p => p.id === id);
+  const dbPlayer = players.find(p => p.id === id);
   const [view, setView] = useState('quests'); // 'quests' or 'wardrobe'
   const [wardrobeTab, setWardrobeTab] = useState('Top');
   const [pageState, setPageState] = useState({});
+  const [draftAvatar, setDraftAvatar] = useState(null);
 
-  if (!player) return <div>Hero not found...</div>;
+  if (!dbPlayer) return <div>Hero not found...</div>;
+
+  const player = draftAvatar ? { ...dbPlayer, ...draftAvatar } : dbPlayer;
 
   const handleClaim = async (quest) => {
     let newXp = (player.xp || 0) + (quest.xp || 0);
@@ -52,16 +55,32 @@ function Dashboard({ players, quests, shopItems }) {
     });
   };
 
-  const updateAvatar = async (key, value) => {
+  const updateAvatar = (key, value) => {
     if (key === 'themeColor') {
-      await updateDoc(doc(db, 'players', player.id), { themeColor: value });
+      setDraftAvatar(prev => ({ ...prev, themeColor: value }));
     } else if (key === 'name') {
-      await updateDoc(doc(db, 'players', player.id), { name: value });
+      setDraftAvatar(prev => ({ ...prev, name: value }));
     } else {
-      await updateDoc(doc(db, 'players', player.id), {
-        [`avatarConfig.${key}`]: value === 'none' ? [] : [value]
-      });
+      setDraftAvatar(prev => ({
+        ...prev,
+        avatarConfig: {
+          ...(prev?.avatarConfig || {}),
+          [key]: value === 'none' ? [] : [value]
+        }
+      }));
     }
+  };
+
+  const handleEquipAndReturn = async () => {
+    if (draftAvatar) {
+      await updateDoc(doc(db, 'players', dbPlayer.id), {
+        name: draftAvatar.name || '',
+        themeColor: draftAvatar.themeColor || '#10b981',
+        avatarConfig: draftAvatar.avatarConfig || {}
+      });
+      setDraftAvatar(null);
+    }
+    setView('quests');
   };
 
   const renderCarousel = (options, key, renderItem, itemsPerPage) => {
@@ -99,7 +118,7 @@ function Dashboard({ players, quests, shopItems }) {
         {maxPage > 0 && (
           <div className="flex-center" style={{ gap: '8px' }}>
             {Array.from({ length: maxPage + 1 }).map((_, i) => (
-              <div key={i} style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: i === page ? '#10b981' : '#d4ba94' }} />
+              <div key={i} style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: i === page ? '#10b981' : '#94a3b8' }} />
             ))}
           </div>
         )}
@@ -113,11 +132,11 @@ function Dashboard({ players, quests, shopItems }) {
       <div
         key={opt}
         style={{
-          backgroundColor: isSelected ? 'var(--color-success)' : '#2d1d13',
+          backgroundColor: isSelected ? 'var(--color-success)' : '#374151',
           padding: '12px',
           borderRadius: '16px',
           border: '4px solid',
-          borderColor: isSelected ? '#10b981' : '#160d07',
+          borderColor: isSelected ? '#10b981' : '#0f172a',
           cursor: 'pointer',
           transition: 'all 0.2s',
           boxShadow: isSelected ? `0 4px 0 rgba(0,0,0,0.2)` : 'none'
@@ -155,7 +174,7 @@ function Dashboard({ players, quests, shopItems }) {
   return (
     <div>
       <div className="flex-between" style={{ marginBottom: '24px' }}>
-        <button className="btn-game" style={{ fontSize: '1rem', padding: '8px 16px' }} onClick={() => navigate('/')}>
+        <button className="btn-game" style={{ fontSize: '1rem', padding: '8px 16px', backgroundColor: '#3b82f6', borderColor: '#1e3a8a', color: '#fff' }} onClick={() => navigate('/')}>
           <div className="flex-center" style={{ gap: '8px' }}>
             <ArrowLeft size={18} /> SWITCH HERO
           </div>
@@ -170,7 +189,7 @@ function Dashboard({ players, quests, shopItems }) {
           <div className="panel">
             <h2 className="game-font panel-header">Character Sheet</h2>
             <div className="panel-inner flex-col items-center" style={{ paddingTop: '32px', borderColor: player.themeColor || '#10b981', borderWidth: '4px' }}>
-              <div style={{ backgroundColor: '#2d1d13', borderRadius: '50%', padding: '12px', border: `4px solid ${player.themeColor || '#10b981'}`, boxShadow: `0 8px 16px ${player.themeColor || '#10b981'}40`, marginBottom: '16px' }}>
+              <div style={{ backgroundColor: '#374151', borderRadius: '50%', padding: '12px', border: `4px solid ${player.themeColor || '#10b981'}`, boxShadow: `0 8px 16px ${player.themeColor || '#10b981'}40`, marginBottom: '16px' }}>
                 <AvatarDisplay config={player.avatarConfig || {}} size={140} />
               </div>
               <h3 className="game-font" style={{ fontSize: '1.6rem', color: '#fff' }}>{(player.name || 'UNKNOWN HERO').toUpperCase()}</h3>
@@ -194,7 +213,14 @@ function Dashboard({ players, quests, shopItems }) {
               <button
                 className="btn-game"
                 style={{ width: '100%', backgroundColor: '#3b82f6', borderColor: '#1e3a8a', color: '#fff', fontSize: '1rem', padding: '12px' }}
-                onClick={() => setView('wardrobe')}
+                onClick={() => {
+                  setDraftAvatar({
+                    name: dbPlayer.name || '',
+                    themeColor: dbPlayer.themeColor || '#10b981',
+                    avatarConfig: dbPlayer.avatarConfig || {}
+                  });
+                  setView('wardrobe');
+                }}
                 disabled={view === 'wardrobe'}
               >
                 <div className="flex-center" style={{ gap: '8px' }}>
@@ -216,7 +242,7 @@ function Dashboard({ players, quests, shopItems }) {
                     .filter(q => q.assignedTo === player.id || q.assignedTo === 'co-op' || !q.assignedTo)
                     .map(q => (
                       <div key={q.id} className="quest-paper flex-col" style={{ opacity: q.status === 'Completed' ? 0.6 : 1 }}>
-                        <h3 className="game-font" style={{ marginBottom: '8px', fontSize: '1.3rem', lineHeight: '1.2', color: '#3d2616' }}>{(q.title || 'UNKNOWN QUEST').toUpperCase()}</h3>
+                        <h3 className="game-font" style={{ marginBottom: '8px', fontSize: '1.3rem', lineHeight: '1.2', color: '#1e293b' }}>{(q.title || 'UNKNOWN QUEST').toUpperCase()}</h3>
 
                         {q.isNonNegotiable && (
                           <div style={{ fontSize: '0.8rem', color: '#b45309', fontWeight: 'bold', marginBottom: '8px', border: '1px solid #b45309', padding: '2px 8px', borderRadius: '12px', display: 'inline-block', alignSelf: 'flex-start' }}>
@@ -228,7 +254,7 @@ function Dashboard({ players, quests, shopItems }) {
                           <div className="flex-center" style={{ gap: '4px', color: '#1e3a8a' }}>
                             <Star size={18} fill="#3b82f6" strokeWidth={1} /> {q.xp || 0} XP
                           </div>
-                          <div className="flex-center" style={{ gap: '4px', color: '#78350f' }}>
+                          <div className="flex-center" style={{ gap: '4px', color: '#334155' }}>
                             <Coins size={18} fill="#f59e0b" strokeWidth={1} /> {q.gold || 0}
                           </div>
                         </div>
@@ -253,7 +279,7 @@ function Dashboard({ players, quests, shopItems }) {
               <div className="panel-inner" style={{ padding: '24px' }}>
 
                 <div className="flex-center flex-col" style={{ marginBottom: '16px' }}>
-                  <label className="game-font" style={{ color: '#d4ba94', fontSize: '0.9rem', marginBottom: '4px' }}>HERO NAME</label>
+                  <label className="game-font" style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '4px' }}>HERO NAME</label>
                   <input
                     type="text"
                     value={player.name || ''}
@@ -263,9 +289,9 @@ function Dashboard({ players, quests, shopItems }) {
                       fontSize: '1.4rem',
                       padding: '4px 12px',
                       borderRadius: '8px',
-                      border: '3px solid #d4ba94',
-                      backgroundColor: '#fff9eb',
-                      color: '#3d2616',
+                      border: '3px solid #94a3b8',
+                      backgroundColor: '#f1f5f9',
+                      color: '#1e293b',
                       textAlign: 'center',
                       width: '75%',
                       maxWidth: '300px',
@@ -288,7 +314,7 @@ function Dashboard({ players, quests, shopItems }) {
                   ))}
                 </div>
 
-                <div style={{ backgroundColor: '#fdf6e8', borderRadius: '16px', padding: '24px', border: '3px solid #d4ba94', minHeight: '300px' }}>
+                <div style={{ backgroundColor: '#e2e8f0', borderRadius: '16px', padding: '24px', border: '3px solid #94a3b8', minHeight: '300px' }}>
                   {wardrobeTab === 'Theme' && (
                     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
                       {dictThemeColors.map(color => (
@@ -309,16 +335,16 @@ function Dashboard({ players, quests, shopItems }) {
                   {wardrobeTab === 'Top' && (
                     <>
                       {renderOptionGrid(dictTop, 'top')}
-                      <div style={{ height: '2px', backgroundColor: '#d4ba94', margin: '24px 0' }}></div>
-                      <h3 className="game-font" style={{ color: '#3d2616', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Hair Color</h3>
+                      <div style={{ height: '2px', backgroundColor: '#94a3b8', margin: '24px 0' }}></div>
+                      <h3 className="game-font" style={{ color: '#1e293b', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Hair Color</h3>
                       {renderColorGrid(dictHairColors, 'hairColor')}
                     </>
                   )}
                   {wardrobeTab === 'Clothes' && (
                     <>
                       {renderOptionGrid(dictClothing, 'clothing')}
-                      <div style={{ height: '2px', backgroundColor: '#d4ba94', margin: '24px 0' }}></div>
-                      <h3 className="game-font" style={{ color: '#3d2616', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Clothes Color</h3>
+                      <div style={{ height: '2px', backgroundColor: '#94a3b8', margin: '24px 0' }}></div>
+                      <h3 className="game-font" style={{ color: '#1e293b', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Clothes Color</h3>
                       {renderColorGrid(dictClothesColors, 'clothesColor')}
                     </>
                   )}
@@ -326,20 +352,20 @@ function Dashboard({ players, quests, shopItems }) {
 
                   {wardrobeTab === 'Face' && (
                     <>
-                      <h3 className="game-font" style={{ color: '#3d2616', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Skin Color</h3>
+                      <h3 className="game-font" style={{ color: '#1e293b', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Skin Color</h3>
                       {renderColorGrid(dictSkinColors, 'skinColor')}
-                      <div style={{ height: '2px', backgroundColor: '#d4ba94', margin: '24px 0' }}></div>
-                      <h3 className="game-font" style={{ color: '#3d2616', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Eyes</h3>
+                      <div style={{ height: '2px', backgroundColor: '#94a3b8', margin: '24px 0' }}></div>
+                      <h3 className="game-font" style={{ color: '#1e293b', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Eyes</h3>
                       {renderOptionGrid(dictEyes, 'eyes')}
-                      <div style={{ height: '2px', backgroundColor: '#d4ba94', margin: '24px 0' }}></div>
-                      <h3 className="game-font" style={{ color: '#3d2616', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Mouth</h3>
+                      <div style={{ height: '2px', backgroundColor: '#94a3b8', margin: '24px 0' }}></div>
+                      <h3 className="game-font" style={{ color: '#1e293b', marginBottom: '16px', textAlign: 'center', fontSize: '1.5rem' }}>Mouth</h3>
                       {renderOptionGrid(dictMouth, 'mouth')}
                     </>
                   )}
                 </div>
 
                 <div className="flex-center" style={{ marginTop: '32px' }}>
-                  <button className="btn-game success" style={{ fontSize: '1.5rem', padding: '16px 48px' }} onClick={() => setView('quests')}>
+                  <button className="btn-game success" style={{ fontSize: '1.5rem', padding: '16px 48px' }} onClick={handleEquipAndReturn}>
                     EQUIP & RETURN
                   </button>
                 </div>
@@ -352,10 +378,10 @@ function Dashboard({ players, quests, shopItems }) {
         <div className="flex-col">
           <div className="panel">
             <h2 className="game-font panel-header">Reward Shop</h2>
-            <div className="panel-inner" style={{ backgroundColor: '#2d1d13' }}>
+            <div className="panel-inner" style={{ backgroundColor: '#374151' }}>
               {shopItems.map(item => (
                 <div key={item.id} className="shop-item">
-                  <div style={{ backgroundColor: '#111', padding: '12px', borderRadius: '50%', border: '4px solid #160d07' }}>
+                  <div style={{ backgroundColor: '#111', padding: '12px', borderRadius: '50%', border: '4px solid #0f172a' }}>
                     <item.icon size={24} color="#10b981" />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -370,20 +396,20 @@ function Dashboard({ players, quests, shopItems }) {
           </div>
 
           <div className="panel" style={{ marginTop: '32px' }}>
-            <h2 className="game-font panel-header" style={{ backgroundColor: '#f59e0b', color: '#78350f' }}>Allowance Tracker</h2>
-            <div className="panel-inner flex-col items-center" style={{ backgroundColor: '#2d1d13', padding: '24px' }}>
+            <h2 className="game-font panel-header">Allowance Tracker</h2>
+            <div className="panel-inner flex-col items-center" style={{ backgroundColor: '#374151', padding: '24px' }}>
               <div className="flex-between game-font" style={{ fontSize: '1rem', marginBottom: '8px', width: '100%' }}>
                 <span style={{ color: '#fff' }}>Weekly Quests</span>
                 <span style={{ color: '#f59e0b' }}>{player.weeklyNonNegotiablesCompleted || 0} / {player.weeklyNonNegotiablesTotal || 5}</span>
               </div>
-              <div className="xp-bar-bg" style={{ height: '24px', borderRadius: '12px', width: '100%', backgroundColor: '#160d07' }}>
+              <div className="xp-bar-bg" style={{ height: '24px', borderRadius: '12px', width: '100%', backgroundColor: '#0f172a' }}>
                 <div className="xp-bar-fill" style={{
                   width: `${Math.min(((player.weeklyNonNegotiablesCompleted || 0) / (player.weeklyNonNegotiablesTotal || 5)) * 100, 100)}%`,
                   backgroundColor: '#f59e0b',
                   boxShadow: '0 0 10px #f59e0b'
                 }}></div>
               </div>
-              <p style={{ color: '#d4ba94', fontSize: '0.85rem', marginTop: '16px', textAlign: 'center' }}>
+              <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '16px', textAlign: 'center' }}>
                 Complete your non-negotiable quests to fill the bar and earn your weekly pocket money!
               </p>
             </div>

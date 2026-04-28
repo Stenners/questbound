@@ -20,7 +20,7 @@ function ProfileSelector({ players }) {
               onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
             >
               <div className="panel-inner flex-col items-center" style={{ gap: '16px', padding: '32px 16px' }}>
-                <div style={{ backgroundColor: '#2d1d13', borderRadius: '50%', padding: '8px', border: '4px solid #d4ba94', boxShadow: '0 8px 16px rgba(0,0,0,0.4)' }}>
+                <div style={{ backgroundColor: '#374151', borderRadius: '50%', padding: '8px', border: '4px solid #94a3b8', boxShadow: '0 8px 16px rgba(0,0,0,0.4)' }}>
                   <AvatarDisplay config={p.avatarConfig || {}} size={140} />
                 </div>
                 <h2 className="game-font" style={{ color: '#fff', fontSize: '2rem', letterSpacing: '1px', marginTop: '8px' }}>{(p.name || 'Unknown Hero').toUpperCase()}</h2>
