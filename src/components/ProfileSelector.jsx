@@ -7,7 +7,7 @@ function ProfileSelector({ players }) {
 
   return (
     <div className="flex-col flex-center" style={{ minHeight: '80vh', gap: '32px' }}>
-      <h1 className="app-header" style={{ fontSize: '4.5rem' }}>QuestBound</h1>
+      <h1 className="app-header" style={{ fontSize: '3.5rem' }}>QuestBound</h1>
       <div className="flex-center" style={{ gap: '32px', flexWrap: 'wrap' }}>
         {players.map(p => {
           return (

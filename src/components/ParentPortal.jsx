@@ -121,14 +121,16 @@ function ParentPortal({ players, quests, rewards }) {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-      <div className="flex-between" style={{ marginBottom: '24px' }}>
-        <button className="btn-game" style={{ fontSize: '1rem', padding: '8px 16px', backgroundColor: '#3b82f6', borderColor: '#1e3a8a', color: '#fff' }} onClick={() => navigate('/')}>
-          <div className="flex-center" style={{ gap: '8px' }}>
-            <ArrowLeft size={18} /> EXIT PORTAL
-          </div>
-        </button>
-        <h1 className="app-header" style={{ marginBottom: 0 }}>Dungeon Master</h1>
-        <div style={{ width: 140 }}></div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', marginBottom: '24px', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+          <button className="btn-game" style={{ fontSize: '0.9rem', padding: '8px 16px', backgroundColor: '#3b82f6', borderColor: '#1e3a8a', color: '#fff' }} onClick={() => navigate('/')}>
+            <div className="flex-center" style={{ gap: '8px' }}>
+              <ArrowLeft size={18} /> EXIT PORTAL
+            </div>
+          </button>
+        </div>
+        <h1 className="app-header" style={{ marginBottom: 0, whiteSpace: 'nowrap' }}>Dungeon Master</h1>
+        <div />
       </div>
 
       <div className="portal-grid">

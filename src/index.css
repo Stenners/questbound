@@ -72,7 +72,7 @@ h6,
 /* Layout */
 .app-header {
   text-align: center;
-  font-size: 3.5rem;
+  font-size: 3rem;
   color: var(--color-quest);
   text-shadow: 0 4px 0 #1a1a1a, 0 -2px 0 #1a1a1a, 2px 0 0 #1a1a1a, -2px 0 0 #1a1a1a;
   margin-bottom: 24px;
@@ -81,11 +81,11 @@ h6,
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 340px 1fr 340px;
-  gap: 24px;
+  grid-template-columns: 300px 1fr 300px;
+  gap: 20px;
+  max-width: 1300px;
   margin: 0 auto;
   align-items: stretch;
-  /* Stretch children to full height */
 }
 
 /* Panels */
@@ -102,7 +102,7 @@ h6,
 
 .panel-header {
   text-align: center;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: #fff;
   text-shadow: 2px 2px 0 #000;
   margin-bottom: 12px;
@@ -113,7 +113,7 @@ h6,
 .panel-inner {
   background-color: var(--color-panel-inner);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 12px;
   border: 4px solid #0f172a;
   display: flex;
   flex-direction: column;
@@ -141,7 +141,7 @@ h6,
   cursor: pointer;
   box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.1), 0 4px 0 #2a1a10;
   transition: all 0.1s ease;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   letter-spacing: 1px;
 }
 
@@ -179,7 +179,7 @@ h6,
 .flex-col {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .items-center {
@@ -237,7 +237,7 @@ h6,
   background: linear-gradient(145deg, #f8fafc, #e2e8f0);
   border: 3px solid #94a3b8;
   border-radius: var(--radius-md);
-  padding: 24px 16px 16px;
+  padding: 24px 12px 12px;
   text-align: center;
   position: relative;
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.03), 0 4px 6px rgba(0, 0, 0, 0.15);
@@ -261,11 +261,11 @@ h6,
 .shop-item {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   background-color: #242f36;
-  padding: 12px;
+  padding: 10px;
   border-radius: var(--radius-md);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   border: 4px solid #1a2227;
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
 }
@@ -278,23 +278,33 @@ h6,
   align-items: start;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
   .dashboard-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 260px 1fr 260px;
+    gap: 16px;
+  }
+  .app-header {
+    font-size: 2.8rem;
   }
 }
 
-@media (max-width: 850px) {
+@media (max-width: 950px) {
   body {
-    padding: 12px;
+    padding: 16px;
   }
   .app-header {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
   }
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
   .portal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .dashboard-grid {
     grid-template-columns: 1fr;
   }
   .quests-grid {
