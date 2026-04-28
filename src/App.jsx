@@ -7,11 +7,11 @@ import './index.css';
 import ProfileSelector from './components/ProfileSelector';
 import Dashboard from './components/Dashboard';
 import ParentPortal from './components/ParentPortal';
-import { shopItems } from './constants';
 
 function MainApp() {
   const [players, setPlayers] = useState([]);
   const [quests, setQuests] = useState([]);
+  const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,12 +23,18 @@ function MainApp() {
     const unsubQuests = onSnapshot(collection(db, 'quests'), (snapshot) => {
       const q = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setQuests(q);
+    });
+
+    const unsubRewards = onSnapshot(collection(db, 'rewards'), (snapshot) => {
+      const r = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRewards(r);
       setLoading(false);
     });
 
     return () => {
       unsubPlayers();
       unsubQuests();
+      unsubRewards();
     };
   }, []);
 
@@ -49,10 +55,10 @@ function MainApp() {
           <Dashboard
             players={players}
             quests={quests}
-            shopItems={shopItems}
+            shopItems={rewards}
           />
         } />
-        <Route path="/admin" element={<ParentPortal players={players} quests={quests} />} />
+        <Route path="/admin" element={<ParentPortal players={players} quests={quests} rewards={rewards} />} />
       </Routes>
     </BrowserRouter>
   );

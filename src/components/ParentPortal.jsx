@@ -2,16 +2,34 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArrowLeft, Trash2, XCircle } from 'lucide-react';
+import { ArrowLeft, Trash2, XCircle, ShoppingBag, Plus } from 'lucide-react';
+import { ICON_MAP } from '../constants';
 
-function ParentPortal({ players, quests }) {
+function ParentPortal({ players, quests, rewards }) {
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const [newQuest, setNewQuest] = useState({ title: '', xp: 10, gold: 10, assignedTo: 'co-op', isNonNegotiable: false });
+  const [newReward, setNewReward] = useState({ title: '', cost: 20, icon: 'ShoppingBag' });
 
   const CORRECT_PIN = import.meta.env.VITE_PARENT_PIN;
+
+  const handleAddReward = async (e) => {
+    e.preventDefault();
+    if (!newReward.title) return;
+    await addDoc(collection(db, 'rewards'), {
+      ...newReward,
+      cost: Number(newReward.cost)
+    });
+    setNewReward({ title: '', cost: 20, icon: 'ShoppingBag' });
+  };
+
+  const handleDeleteReward = async (rewardId) => {
+    if (window.confirm('Delete this reward?')) {
+      await deleteDoc(doc(db, 'rewards', rewardId));
+    }
+  };
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -149,6 +167,71 @@ function ParentPortal({ players, quests }) {
                   </div>
                 </div>
               ))}
+              {players.length === 0 && <div style={{ textAlign: 'center', color: '#334155' }}>No heroes found.</div>}
+            </div>
+          </div>
+
+          <div className="panel" style={{ marginTop: '24px' }}>
+            <h2 className="game-font panel-header">Reward Management</h2>
+            <div className="panel-inner flex-col" style={{ padding: '16px', gap: '16px' }}>
+              <form onSubmit={handleAddReward} className="flex-col" style={{ gap: '12px', paddingBottom: '16px', borderBottom: '2px solid #94a3b8' }}>
+                <input 
+                  type="text" 
+                  placeholder="Reward Title" 
+                  value={newReward.title} 
+                  onChange={e => setNewReward({ ...newReward, title: e.target.value })} 
+                  style={{ padding: '8px', borderRadius: '8px', border: '2px solid #94a3b8', fontSize: '1.1rem' }} 
+                  required 
+                />
+                <div className="flex-between" style={{ gap: '12px' }}>
+                  <div className="flex-col" style={{ flex: 1, gap: '4px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#334155', fontWeight: 'bold' }}>Cost (Gold)</label>
+                    <input 
+                      type="number" 
+                      value={newReward.cost} 
+                      onChange={e => setNewReward({ ...newReward, cost: e.target.value })} 
+                      style={{ padding: '8px', borderRadius: '8px', border: '2px solid #94a3b8', fontSize: '1rem' }} 
+                      required 
+                    />
+                  </div>
+                  <div className="flex-col" style={{ flex: 1, gap: '4px' }}>
+                    <label style={{ fontSize: '0.8rem', color: '#334155', fontWeight: 'bold' }}>Icon</label>
+                    <select 
+                      value={newReward.icon} 
+                      onChange={e => setNewReward({ ...newReward, icon: e.target.value })} 
+                      style={{ padding: '8px', borderRadius: '8px', border: '2px solid #94a3b8', fontSize: '1rem' }}
+                    >
+                      {Object.keys(ICON_MAP).map(iconName => (
+                        <option key={iconName} value={iconName}>{iconName}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <button type="submit" className="btn-game success">ADD REWARD</button>
+              </form>
+
+              <div className="flex-col" style={{ gap: '8px' }}>
+                {rewards.map(r => {
+                  const RewardIcon = ICON_MAP[r.icon] || ShoppingBag;
+                  return (
+                    <div key={r.id} className="flex-between" style={{ backgroundColor: '#f1f5f9', border: '2px solid #94a3b8', borderRadius: '12px', padding: '12px' }}>
+                      <div className="flex-center" style={{ gap: '12px' }}>
+                        <div style={{ backgroundColor: '#374151', padding: '6px', borderRadius: '50%' }}>
+                          <RewardIcon size={20} color="#10b981" />
+                        </div>
+                        <div>
+                          <div className="game-font" style={{ fontSize: '1rem', color: '#1e293b' }}>{r.title.toUpperCase()}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 'bold' }}>{r.cost} GOLD</div>
+                        </div>
+                      </div>
+                      <button onClick={() => handleDeleteReward(r.id)} style={{ background: '#334155', color: 'white', border: 'none', borderRadius: '4px', padding: '6px', cursor: 'pointer', display: 'flex' }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  );
+                })}
+                {rewards.length === 0 && <div style={{ textAlign: 'center', color: '#334155' }}>No rewards set.</div>}
+              </div>
             </div>
           </div>
         </div>
