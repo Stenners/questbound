@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Coins, Star, ArrowLeft, Palette } from 'lucide-react';
-import { updateDoc, doc } from 'firebase/firestore';
+import { updateDoc, doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import AvatarDisplay from './AvatarDisplay';
 import {
@@ -26,7 +26,7 @@ function Dashboard({ players, quests, shopItems }) {
   const [pageState, setPageState] = useState({});
   const [draftAvatar, setDraftAvatar] = useState(null);
 
-  if (!dbPlayer) return <div>Hero not found...</div>;
+  if (!dbPlayer) return <div></div>;
 
   const player = draftAvatar ? { ...dbPlayer, ...draftAvatar } : dbPlayer;
 
@@ -53,6 +53,17 @@ function Dashboard({ players, quests, shopItems }) {
     await updateDoc(doc(db, 'quests', quest.id), {
       status: 'Completed',
       claimedBy: player.id
+    });
+
+    await addDoc(collection(db, 'questLogs'), {
+      questId: quest.id,
+      questTitle: quest.title || 'UNKNOWN QUEST',
+      playerId: player.id,
+      playerName: player.name || 'UNKNOWN HERO',
+      xp: quest.xp || 0,
+      gold: quest.gold || 0,
+      timestamp: serverTimestamp(),
+      action: 'CLAIM_QUEST'
     });
   };
 

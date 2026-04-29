@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArrowLeft, Trash2, XCircle, ShoppingBag, Plus } from 'lucide-react';
+import { ArrowLeft, Trash2, XCircle, ShoppingBag, Plus, RotateCcw } from 'lucide-react';
 import { ICON_MAP } from '../constants';
 
 function ParentPortal({ players, quests, rewards }) {
@@ -60,6 +60,22 @@ function ParentPortal({ players, quests, rewards }) {
     }
   };
 
+  const handleResetQuest = async (quest) => {
+    if (window.confirm(`Reset "${quest.title || 'this quest'}" back to Available? (This does NOT deduct XP/Gold)`)) {
+      await updateDoc(doc(db, 'quests', quest.id), {
+        status: 'Available',
+        claimedBy: null
+      });
+
+      await addDoc(collection(db, 'questLogs'), {
+        questId: quest.id,
+        questTitle: quest.title || 'UNKNOWN QUEST',
+        action: 'RESET_QUEST_MANUAL',
+        timestamp: serverTimestamp()
+      });
+    }
+  };
+
   const handleRejectClaim = async (quest) => {
     if (!quest.claimedBy) {
       alert('Cannot reject: We do not know who claimed this quest.');
@@ -86,6 +102,17 @@ function ParentPortal({ players, quests, rewards }) {
       await updateDoc(doc(db, 'quests', quest.id), {
         status: 'Available',
         claimedBy: null
+      });
+
+      await addDoc(collection(db, 'questLogs'), {
+        questId: quest.id,
+        questTitle: quest.title || 'UNKNOWN QUEST',
+        playerId: player.id,
+        playerName: player.name || 'UNKNOWN HERO',
+        xpDeducted: quest.xp || 0,
+        goldDeducted: quest.gold || 0,
+        action: 'REJECT_CLAIM',
+        timestamp: serverTimestamp()
       });
     }
   };
@@ -299,6 +326,9 @@ function ParentPortal({ players, quests, rewards }) {
                     </div>
                   </div>
                   <div className="flex-center" style={{ gap: '8px' }}>
+                    <button onClick={() => handleResetQuest(q)} title="Reset to Available" style={{ background: '#3b82f6', color: 'white', border: 'none', borderRadius: '4px', padding: '6px', cursor: 'pointer', display: 'flex' }}>
+                      <RotateCcw size={18} />
+                    </button>
                     {q.status === 'Completed' && (
                       <button onClick={() => handleRejectClaim(q)} title="Reject Claim" style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', padding: '6px', cursor: 'pointer', display: 'flex' }}>
                         <XCircle size={18} />

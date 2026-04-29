@@ -41,6 +41,15 @@ export const dailyQuestReset = onSchedule({
           status: "Available",
           claimedBy: null,
         });
+
+        const logRef = db.collection("questLogs").doc();
+        batch.set(logRef, {
+          questId: doc.id,
+          questTitle: questData.title || "UNKNOWN QUEST",
+          action: "RESET_QUEST_AUTO",
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
         resetCount++;
       }
     });
