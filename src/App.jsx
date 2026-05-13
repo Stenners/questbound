@@ -12,6 +12,7 @@ function MainApp() {
   const [players, setPlayers] = useState([]);
   const [quests, setQuests] = useState([]);
   const [rewards, setRewards] = useState([]);
+  const [rewardLogs, setRewardLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,10 +32,16 @@ function MainApp() {
       setLoading(false);
     });
 
+    const unsubRewardLogs = onSnapshot(collection(db, 'rewardLogs'), (snapshot) => {
+      const rl = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setRewardLogs(rl);
+    });
+
     return () => {
       unsubPlayers();
       unsubQuests();
       unsubRewards();
+      unsubRewardLogs();
     };
   }, []);
 
@@ -58,7 +65,7 @@ function MainApp() {
             shopItems={rewards}
           />
         } />
-        <Route path="/admin" element={<ParentPortal players={players} quests={quests} rewards={rewards} />} />
+        <Route path="/admin" element={<ParentPortal players={players} quests={quests} rewards={rewards} rewardLogs={rewardLogs} />} />
       </Routes>
     </BrowserRouter>
   );

@@ -4,6 +4,7 @@ import { Coins, Star, ArrowLeft, Palette } from 'lucide-react';
 import { updateDoc, doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import AvatarDisplay from './AvatarDisplay';
+import RewardStore from './RewardStore';
 import {
   dictTop,
   dictEyes,
@@ -65,6 +66,31 @@ function Dashboard({ players, quests, shopItems }) {
       timestamp: serverTimestamp(),
       action: 'CLAIM_QUEST'
     });
+  };
+
+  const handlePurchase = async (item) => {
+    if ((player.gold || 0) < item.cost) {
+      alert("Not enough gold!");
+      return;
+    }
+
+    if (window.confirm(`Buy ${item.title} for ${item.cost} Gold?`)) {
+      await updateDoc(doc(db, 'players', player.id), {
+        gold: (player.gold || 0) - item.cost
+      });
+
+      await addDoc(collection(db, 'rewardLogs'), {
+        playerId: player.id,
+        playerName: player.name || 'UNKNOWN HERO',
+        itemId: item.id,
+        itemTitle: item.title || 'UNKNOWN REWARD',
+        cost: item.cost,
+        timestamp: serverTimestamp(),
+        status: 'pending'
+      });
+
+      alert(`Purchased ${item.title}! Inform the Dungeon Master to claim your reward.`);
+    }
   };
 
   const updateAvatar = (key, value) => {
@@ -366,24 +392,11 @@ function Dashboard({ players, quests, shopItems }) {
         <div className="flex-col">
           <div className="panel">
             <h2 className="game-font panel-header">Reward Shop</h2>
-            <div className="panel-inner" style={{ backgroundColor: '#374151' }}>
-              {shopItems.map(item => {
-                const ItemIcon = ICON_MAP[item.icon] || ICON_MAP.ShoppingBag;
-                return (
-                  <div key={item.id} className="shop-item">
-                    <div style={{ backgroundColor: '#111', padding: '12px', borderRadius: '50%', border: '4px solid #0f172a' }}>
-                      <ItemIcon size={24} color="#10b981" />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div className="game-font" style={{ fontSize: '1.2rem', color: '#fff', marginBottom: '4px' }}>{item.title.toUpperCase()}</div>
-                      <div className="flex-center game-font" style={{ gap: '6px', color: 'var(--color-quest)', justifyContent: 'flex-start', fontSize: '1.1rem', letterSpacing: '0.5px' }}>
-                        <Coins size={16} fill="currentColor" strokeWidth={2} /> {item.cost} Gold
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <RewardStore 
+              player={player} 
+              shopItems={shopItems} 
+              onPurchase={handlePurchase} 
+            />
           </div>
 
           <div className="panel">

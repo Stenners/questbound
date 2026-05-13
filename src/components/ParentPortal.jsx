@@ -5,7 +5,7 @@ import { db } from '../firebase';
 import { ArrowLeft, Trash2, XCircle, ShoppingBag, Plus, RotateCcw } from 'lucide-react';
 import { ICON_MAP } from '../constants';
 
-function ParentPortal({ players, quests, rewards }) {
+function ParentPortal({ players, quests, rewards, rewardLogs }) {
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -29,6 +29,12 @@ function ParentPortal({ players, quests, rewards }) {
     if (window.confirm('Delete this reward?')) {
       await deleteDoc(doc(db, 'rewards', rewardId));
     }
+  };
+
+  const handleFulfillReward = async (logId) => {
+    await updateDoc(doc(db, 'rewardLogs', logId), {
+      status: 'fulfilled'
+    });
   };
 
   const handleLogin = (e) => {
@@ -262,6 +268,37 @@ function ParentPortal({ players, quests, rewards }) {
                 })}
                 {rewards.length === 0 && <div style={{ textAlign: 'center', color: '#334155' }}>No rewards set.</div>}
               </div>
+            </div>
+          </div>
+
+          <div className="panel" style={{ marginTop: '24px' }}>
+            <h2 className="game-font panel-header">Reward Claims</h2>
+            <div className="panel-inner flex-col" style={{ padding: '16px', gap: '12px' }}>
+              {rewardLogs && rewardLogs.filter(log => log.status === 'pending').map(log => (
+                <div key={log.id} className="flex-between" style={{ backgroundColor: '#fef3c7', border: '2px solid #f59e0b', borderRadius: '12px', padding: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div className="game-font" style={{ fontSize: '1rem', color: '#92400e' }}>
+                      {log.playerName.toUpperCase()} BOUGHT:
+                    </div>
+                    <div className="game-font" style={{ fontSize: '1.2rem', color: '#1e293b' }}>
+                      {log.itemTitle.toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#b45309', fontWeight: 'bold' }}>
+                      COST: {log.cost} GOLD | {log.timestamp?.toDate().toLocaleString() || 'Just now'}
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleFulfillReward(log.id)}
+                    className="btn-game success"
+                    style={{ padding: '8px 12px', fontSize: '0.8rem' }}
+                  >
+                    FULFILL
+                  </button>
+                </div>
+              ))}
+              {(!rewardLogs || rewardLogs.filter(log => log.status === 'pending').length === 0) && (
+                <div style={{ textAlign: 'center', color: '#334155', padding: '12px' }}>No pending reward claims.</div>
+              )}
             </div>
           </div>
         </div>
