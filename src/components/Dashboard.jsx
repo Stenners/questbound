@@ -4,7 +4,6 @@ import { Coins, Star, ArrowLeft, Palette } from 'lucide-react';
 import { updateDoc, doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import AvatarDisplay from './AvatarDisplay';
-import RewardStore from './RewardStore';
 import {
   dictTop,
   dictEyes,
@@ -68,30 +67,7 @@ function Dashboard({ players, quests, shopItems }) {
     });
   };
 
-  const handlePurchase = async (item) => {
-    if ((player.gold || 0) < item.cost) {
-      alert("Not enough gold!");
-      return;
-    }
 
-    if (window.confirm(`Buy ${item.title} for ${item.cost} Gold?`)) {
-      await updateDoc(doc(db, 'players', player.id), {
-        gold: (player.gold || 0) - item.cost
-      });
-
-      await addDoc(collection(db, 'rewardLogs'), {
-        playerId: player.id,
-        playerName: player.name || 'UNKNOWN HERO',
-        itemId: item.id,
-        itemTitle: item.title || 'UNKNOWN REWARD',
-        cost: item.cost,
-        timestamp: serverTimestamp(),
-        status: 'pending'
-      });
-
-      alert(`Purchased ${item.title}! Inform the Dungeon Master to claim your reward.`);
-    }
-  };
 
   const updateAvatar = (key, value) => {
     if (key === 'themeColor') {
@@ -390,13 +366,23 @@ function Dashboard({ players, quests, shopItems }) {
 
         {/* Right Column: Reward Shop */}
         <div className="flex-col">
-          <div className="panel">
-            <h2 className="game-font panel-header">Reward Shop</h2>
-            <RewardStore 
-              player={player} 
-              shopItems={shopItems} 
-              onPurchase={handlePurchase} 
-            />
+          <div className="panel" style={{ background: 'linear-gradient(145deg, #1e293b, #0f172a)', borderColor: '#f59e0b' }}>
+            <h2 className="game-font panel-header" style={{ color: '#f59e0b', textShadow: '0 2px 0 #b45309' }}>The Grand Bazaar</h2>
+            <div className="panel-inner flex-col items-center" style={{ padding: '24px', backgroundColor: 'transparent', border: 'none' }}>
+              <div style={{ padding: '16px', backgroundColor: '#111827', borderRadius: '50%', border: '4px solid #f59e0b', marginBottom: '16px', boxShadow: '0 0 20px rgba(245, 158, 11, 0.4)' }}>
+                <Coins size={48} color="#f59e0b" />
+              </div>
+              <p className="game-font" style={{ textAlign: 'center', fontSize: '1.1rem', marginBottom: '20px', color: '#cbd5e1' }}>
+                Trade your hard-earned gold for epic loot and real-world rewards!
+              </p>
+              <button 
+                className="btn-game" 
+                style={{ fontSize: '1.4rem', padding: '12px 24px', width: '100%', backgroundColor: '#f59e0b', borderColor: '#b45309', color: '#3b2818', animation: 'pulse 2s infinite' }}
+                onClick={() => navigate(`/shop/${player.id}`)}
+              >
+                ENTER SHOP
+              </button>
+            </div>
           </div>
 
           <div className="panel">

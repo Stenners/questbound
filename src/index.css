@@ -85,6 +85,17 @@ h6,
   }
 }
 
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
 /* Layout */
 .app-nav {
   display: grid;
@@ -441,6 +452,85 @@ h6,
   margin-bottom: 6px;
   border: 3px solid #1a2227;
   box-shadow: 0 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.shop-item-card {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border: 4px solid #334155;
+  border-radius: var(--radius-lg);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.shop-item-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.05), transparent);
+  transform: skewX(-20deg);
+  animation: shimmer 3s infinite;
+}
+
+.shop-item-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: #f59e0b;
+  box-shadow: 0 16px 24px rgba(245, 158, 11, 0.2), 0 0 16px rgba(245, 158, 11, 0.2);
+}
+
+.shop-item-icon-wrapper {
+  background-color: #111;
+  padding: 16px;
+  border-radius: 50%;
+  border: 4px solid #10b981;
+  margin-bottom: 16px;
+  box-shadow: inset 0 4px 8px rgba(0,0,0,0.6), 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.shop-item-card:hover .shop-item-icon-wrapper {
+  transform: scale(1.1) rotate(5deg);
+  border-color: #f59e0b;
+  box-shadow: inset 0 4px 8px rgba(0,0,0,0.6), 0 4px 12px rgba(245, 158, 11, 0.5);
+}
+
+.shop-item-title {
+  font-size: 1.4rem;
+  color: #fff;
+  margin-bottom: 8px;
+  text-shadow: 1px 1px 0 #000;
+  min-height: 2.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shop-item-cost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #f59e0b;
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid #451a03;
 }
 
 /* Responsive Design */

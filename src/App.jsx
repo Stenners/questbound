@@ -7,6 +7,7 @@ import './index.css';
 import ProfileSelector from './components/ProfileSelector';
 import Dashboard from './components/Dashboard';
 import ParentPortal from './components/ParentPortal';
+import ShopPage from './components/ShopPage';
 
 function MainApp() {
   const [players, setPlayers] = useState([]);
@@ -62,6 +63,12 @@ function MainApp() {
           <Dashboard
             players={players}
             quests={quests}
+            shopItems={rewards}
+          />
+        } />
+        <Route path="/shop/:id" element={
+          <ShopPage
+            players={players}
             shopItems={rewards}
           />
         } />
