@@ -5,13 +5,36 @@ import { db } from '../firebase';
 import { ArrowLeft, Trash2, XCircle, ShoppingBag, Plus, RotateCcw } from 'lucide-react';
 import { ICON_MAP } from '../constants';
 
+const MODAL_OVERLAY = {
+  position: 'fixed', inset: 0, zIndex: 9999,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  backgroundColor: 'rgba(0,0,0,0.7)',
+};
+
+const MODAL_BOX = {
+  background: '#fff',
+  borderRadius: '16px',
+  padding: '28px 32px',
+  textAlign: 'center',
+  maxWidth: '380px',
+  width: '90%',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '16px',
+  boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+};
+
 function ParentPortal({ players, quests, rewards, rewardLogs }) {
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [modal, setModal] = useState(null); // { type: 'confirm'|'error', title, body, onConfirm? }
 
   const [newQuest, setNewQuest] = useState({ title: '', xp: 10, gold: 10, assignedTo: 'co-op', isNonNegotiable: false, frequency: 'daily' });
   const [newReward, setNewReward] = useState({ title: '', cost: 20, icon: 'ShoppingBag' });
+
+  const confirm = (title, body, onConfirm) => setModal({ type: 'confirm', title, body, onConfirm });
+  const showError = (title, body) => setModal({ type: 'error', title, body });
 
   const CORRECT_PIN = import.meta.env.VITE_PARENT_PIN;
 
@@ -25,10 +48,8 @@ function ParentPortal({ players, quests, rewards, rewardLogs }) {
     setNewReward({ title: '', cost: 20, icon: 'ShoppingBag' });
   };
 
-  const handleDeleteReward = async (rewardId) => {
-    if (window.confirm('Delete this reward?')) {
-      await deleteDoc(doc(db, 'rewards', rewardId));
-    }
+  const handleDeleteReward = (rewardId) => {
+    confirm('Delete Reward', 'Are you sure? This cannot be undone.', () => deleteDoc(doc(db, 'rewards', rewardId)));
   };
 
   const handleFulfillReward = async (logId) => {
@@ -37,12 +58,21 @@ function ParentPortal({ players, quests, rewards, rewardLogs }) {
     });
   };
 
+  const handleDenyReward = async (log) => {
+    await updateDoc(doc(db, 'players', log.playerId), {
+      gold: (players.find(p => p.id === log.playerId)?.gold || 0) + log.cost
+    });
+    await updateDoc(doc(db, 'rewardLogs', log.id), {
+      status: 'denied'
+    });
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
     if (pin === CORRECT_PIN) {
       setIsAuthenticated(true);
     } else {
-      alert('Incorrect PIN');
+      showError('Wrong PIN', 'Incorrect PIN. Try again.');
       setPin('');
     }
   };
@@ -60,37 +90,38 @@ function ParentPortal({ players, quests, rewards, rewardLogs }) {
     setNewQuest({ title: '', xp: 10, gold: 10, assignedTo: 'co-op', isNonNegotiable: false, frequency: 'daily' });
   };
 
-  const handleDeleteQuest = async (questId) => {
-    if (window.confirm('Delete this quest?')) {
-      await deleteDoc(doc(db, 'quests', questId));
-    }
+  const handleDeleteQuest = (questId) => {
+    confirm('Delete Quest', 'Are you sure? This cannot be undone.', () => deleteDoc(doc(db, 'quests', questId)));
   };
 
-  const handleResetQuest = async (quest) => {
-    if (window.confirm(`Reset "${quest.title || 'this quest'}" back to Available? (This does NOT deduct XP/Gold)`)) {
-      await updateDoc(doc(db, 'quests', quest.id), {
-        status: 'Available',
-        claimedBy: null
-      });
-
-      await addDoc(collection(db, 'questLogs'), {
-        questId: quest.id,
-        questTitle: quest.title || 'UNKNOWN QUEST',
-        action: 'RESET_QUEST_MANUAL',
-        timestamp: serverTimestamp()
-      });
-    }
+  const handleResetQuest = (quest) => {
+    confirm(
+      'Reset Quest',
+      `Reset "${quest.title || 'this quest'}" to Available? This does NOT deduct XP or Gold.`,
+      async () => {
+        await updateDoc(doc(db, 'quests', quest.id), { status: 'Available', claimedBy: null });
+        await addDoc(collection(db, 'questLogs'), {
+          questId: quest.id,
+          questTitle: quest.title || 'UNKNOWN QUEST',
+          action: 'RESET_QUEST_MANUAL',
+          timestamp: serverTimestamp()
+        });
+      }
+    );
   };
 
-  const handleRejectClaim = async (quest) => {
+  const handleRejectClaim = (quest) => {
     if (!quest.claimedBy) {
-      alert('Cannot reject: We do not know who claimed this quest.');
+      showError('Cannot Reject', 'We do not know who claimed this quest.');
       return;
     }
     const player = players.find(p => p.id === quest.claimedBy);
     if (!player) return;
 
-    if (window.confirm(`Reject this claim? This will deduct ${quest.xp} XP and ${quest.gold} Gold from ${player.name}.`)) {
+    confirm(
+      'Reject Claim',
+      `This will deduct ${quest.xp} XP and ${quest.gold} Gold from ${player.name}.`,
+      async () => {
       let newXp = (player.xp || 0) - (quest.xp || 0);
       if (newXp < 0) newXp = 0;
 
@@ -120,7 +151,7 @@ function ParentPortal({ players, quests, rewards, rewardLogs }) {
         action: 'REJECT_CLAIM',
         timestamp: serverTimestamp()
       });
-    }
+    });
   };
 
   const handleUpdatePlayer = async (player, field, delta) => {
@@ -155,6 +186,36 @@ function ParentPortal({ players, quests, rewards, rewardLogs }) {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
+      {modal && (
+        <div style={MODAL_OVERLAY} onClick={() => modal.type === 'error' && setModal(null)}>
+          <div style={{ ...MODAL_BOX, border: `3px solid ${modal.type === 'error' ? '#ef4444' : '#f59e0b'}` }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: modal.type === 'error' ? '#ef4444' : '#92400e' }}>
+              {modal.title}
+            </div>
+            <div style={{ fontSize: '0.95rem', color: '#334155' }}>{modal.body}</div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              {modal.type === 'confirm' && (
+                <button
+                  className="btn-game success"
+                  style={{ padding: '10px 24px' }}
+                  onClick={() => { modal.onConfirm(); setModal(null); }}
+                >
+                  Confirm
+                </button>
+              )}
+              <button
+                className="btn-game"
+                style={{ padding: '10px 24px' }}
+                onClick={() => setModal(null)}
+              >
+                {modal.type === 'error' ? 'OK' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="app-nav">
         <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
           <button className="btn-game blue" style={{ fontSize: '0.9rem' }} onClick={() => navigate('/')}>
@@ -287,13 +348,22 @@ function ParentPortal({ players, quests, rewards, rewardLogs }) {
                       COST: {log.cost} GOLD | {log.timestamp?.toDate().toLocaleString() || 'Just now'}
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleFulfillReward(log.id)}
-                    className="btn-game success"
-                    style={{ padding: '8px 12px', fontSize: '0.8rem' }}
-                  >
-                    FULFILL
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => handleFulfillReward(log.id)}
+                      className="btn-game success"
+                      style={{ padding: '8px 12px', fontSize: '0.8rem' }}
+                    >
+                      FULFILL
+                    </button>
+                    <button
+                      onClick={() => handleDenyReward(log)}
+                      className="btn-game"
+                      style={{ padding: '8px 12px', fontSize: '0.8rem', backgroundColor: '#ef4444', borderColor: '#b91c1c' }}
+                    >
+                      DENY
+                    </button>
+                  </div>
                 </div>
               ))}
               {(!rewardLogs || rewardLogs.filter(log => log.status === 'pending').length === 0) && (

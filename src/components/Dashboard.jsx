@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import confetti from 'canvas-confetti';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Coins, Star, ArrowLeft, Palette } from 'lucide-react';
 import { updateDoc, doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -25,6 +26,14 @@ function Dashboard({ players, quests, shopItems }) {
   const [wardrobeTab, setWardrobeTab] = useState('Top');
   const [pageState, setPageState] = useState({});
   const [draftAvatar, setDraftAvatar] = useState(null);
+  const [questComplete, setQuestComplete] = useState(null); // { title, levelUp }
+
+
+  const fireConfetti = useCallback((themeColor) => {
+    const color = themeColor || '#10b981';
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 }, colors: [color, '#f59e0b', '#ffffff'] });
+    setTimeout(() => confetti({ particleCount: 60, spread: 120, origin: { y: 0.55 }, colors: [color, '#fbbf24'] }), 200);
+  }, []);
 
   if (!dbPlayer) return <div></div>;
 
@@ -33,9 +42,11 @@ function Dashboard({ players, quests, shopItems }) {
   const handleClaim = async (quest) => {
     let newXp = (player.xp || 0) + (quest.xp || 0);
     let newMax = player.maxXp || 100;
-    if (newXp >= (player.maxXp || 100)) {
-      newXp = newXp - (player.maxXp || 100);
-      newMax = (player.maxXp || 100) + 50;
+    let newLevel = player.level || 1;
+    while (newXp >= newMax) {
+      newXp -= newMax;
+      newMax += 50;
+      newLevel += 1;
     }
 
     let newCompleted = player.weeklyNonNegotiablesCompleted || 0;
@@ -46,6 +57,7 @@ function Dashboard({ players, quests, shopItems }) {
     await updateDoc(doc(db, 'players', player.id), {
       xp: newXp,
       maxXp: newMax,
+      level: newLevel,
       gold: (player.gold || 0) + (quest.gold || 0),
       weeklyNonNegotiablesCompleted: newCompleted
     });
@@ -65,6 +77,11 @@ function Dashboard({ players, quests, shopItems }) {
       timestamp: serverTimestamp(),
       action: 'CLAIM_QUEST'
     });
+
+    const didLevelUp = newLevel > (player.level || 1);
+    fireConfetti(player.themeColor);
+    setQuestComplete({ title: quest.title, levelUp: didLevelUp ? newLevel : null });
+    setTimeout(() => setQuestComplete(null), 2500);
   };
 
 
@@ -178,6 +195,29 @@ function Dashboard({ players, quests, shopItems }) {
 
   return (
     <div>
+      {questComplete && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+          animation: 'bounceIn 0.4s ease-out',
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1e293b, #0f172a)',
+            border: `4px solid ${player.themeColor || '#10b981'}`,
+            borderRadius: '24px',
+            padding: '32px 48px',
+            textAlign: 'center',
+            boxShadow: `0 0 60px ${player.themeColor || '#10b981'}88`,
+          }}>
+            <div className="game-font" style={{ fontSize: '2.5rem', color: player.themeColor || '#10b981' }}>QUEST COMPLETE!</div>
+            <div className="game-font" style={{ fontSize: '1.2rem', color: '#f8fafc', marginTop: '8px' }}>{questComplete.title.toUpperCase()}</div>
+            {questComplete.levelUp && (
+              <div className="game-font" style={{ fontSize: '1.4rem', color: '#f59e0b', marginTop: '12px' }}>⬆ LEVEL UP! NOW LEVEL {questComplete.levelUp}</div>
+            )}
+          </div>
+        </div>
+      )}
       <div className="app-nav">
         <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
           <button className="btn-game blue" style={{ fontSize: '0.9rem' }} onClick={() => navigate('/')}>
@@ -204,8 +244,8 @@ function Dashboard({ players, quests, shopItems }) {
 
               <div style={{ width: '100%' }}>
                 <div className="flex-between game-font" style={{ fontSize: '1rem', marginBottom: '4px' }}>
-                  <span style={{ color: '#fff' }}>XP Bar</span>
-                  <span style={{ color: player.themeColor || '#10b981' }}>{Math.floor(((player.xp || 0) / (player.maxXp || 100)) * 100)}%</span>
+                  <span style={{ color: '#fff' }}>LEVEL {player.level || 1}</span>
+                  <span style={{ color: player.themeColor || '#10b981' }}>{player.xp || 0} / {player.maxXp || 100} XP</span>
                 </div>
                 <div className="xp-bar-bg" style={{ height: '24px', borderRadius: '12px' }}>
                   <div className="xp-bar-fill" style={{ width: `${((player.xp || 0) / (player.maxXp || 100)) * 100}%`, backgroundColor: player.themeColor || '#10b981' }}></div>
